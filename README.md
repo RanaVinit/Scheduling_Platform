@@ -4,13 +4,6 @@ A full-stack scheduling/booking web application that replicates Cal.com's design
 
 ---
 
-## Live Demo
-
-- **Frontend**: [Deployed URL]
-- **Backend API**: [Deployed URL]
-
----
-
 ## Features
 
 ### Core Features
