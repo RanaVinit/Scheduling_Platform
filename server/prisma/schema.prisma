@@ -1,0 +1,102 @@
+// Scheduling Platform - Database Schema
+// Cal.com Clone - Clean MVC Architecture
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Default user (no auth required per assignment)
+// ============================================
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  timezone  String   @default("Asia/Kolkata")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  eventTypes            EventType[]
+  availabilitySchedules AvailabilitySchedule[]
+
+  @@map("users")
+}
+
+// ============================================
+// Event Types - e.g., "30 Min Meeting", "Quick Chat"
+// ============================================
+model EventType {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  title           String
+  description     String?
+  durationMinutes Int      @map("duration_minutes")
+  slug            String   @unique
+  isActive        Boolean  @default(true) @map("is_active")
+  color           String   @default("#0069FF")
+  bufferMinutes   Int      @default(0) @map("buffer_minutes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("event_types")
+}
+
+// ============================================
+// Availability Schedule - container for rules
+// ============================================
+model AvailabilitySchedule {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String   @default("Working Hours")
+  timezone  String   @default("Asia/Kolkata")
+  isDefault Boolean  @default(true) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rules AvailabilityRule[]
+
+  @@map("availability_schedules")
+}
+
+// ============================================
+// Availability Rules - which days/hours are available
+// day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
+// ============================================
+model AvailabilityRule {
+  id         Int    @id @default(autoincrement())
+  scheduleId Int    @map("schedule_id")
+  dayOfWeek  Int    @map("day_of_week")
+  startTime  String @map("start_time")
+  endTime    String @map("end_time")
+
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@map("availability_rules")
+}
+
+// ============================================
+// Bookings - times stored in UTC
+// ============================================
+model Booking {
+  id          Int       @id @default(autoincrement())
+  eventTypeId Int       @map("event_type_id")
+  bookerName  String    @map("booker_name")
+  bookerEmail String    @map("booker_email")
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime  @map("end_time")
+  status      String    @default("CONFIRMED")
+  timezone    String    @default("Asia/Kolkata")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
